@@ -1,0 +1,66 @@
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+
+// Define the pins for the HC-SR04
+const int trigPin = D5;  // D5 on Wemos D1 Mini Pro
+const int echoPin = D6;  // D6 on Wemos D1 Mini Pro
+
+// Initialize the LCD with the I2C address (usually 0x27 or 0x3F)
+LiquidCrystal_I2C lcd(0x27, 16, 2);  // Adjust the address if necessary
+
+void setup() {
+  // Initialize the serial communication
+  Serial.begin(115200);
+  Wire.begin(D2, D1);
+  // Initialize the LCD
+  lcd.begin(16, 02);
+  lcd.backlight();  // Turn on the backlight
+
+  // Initialize the HC-SR04 pins
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+}
+
+void loop() {
+  // Measure the distance
+  long duration, distanceCm;
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  duration = pulseIn(echoPin, HIGH);
+  distanceCm = duration * 0.034 / 2;  // Calculate distance in cm
+
+  // Display the distance on the LCD
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Distance:");
+
+  if (distanceCm >= 100) {
+    // Convert to meters if distance is 100 cm or more
+    float distanceM = distanceCm / 100.0;
+    lcd.setCursor(0, 1);
+    lcd.print(distanceM, 2);  // Display with 2 decimal places
+    lcd.print(" m");
+  } else {
+    // Display in centimeters
+    lcd.setCursor(0, 1);
+    lcd.print(distanceCm);
+    lcd.print(" cm");
+  }
+
+  // Print the distance to the Serial Monitor
+  Serial.print("Distance: ");
+  if (distanceCm >= 100) {
+    Serial.print(distanceCm / 100.0, 2);
+    Serial.println(" m");
+  } else {
+    Serial.print(distanceCm);
+    Serial.println(" cm");
+  }
+
+  // Wait for a short period before the next measurement
+  delay(500);
+}
